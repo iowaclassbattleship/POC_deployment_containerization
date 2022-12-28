@@ -1,0 +1,19 @@
+version: "3.9"
+services:
+  post:
+    build: ./post
+    ports:
+      - "8081:8081"
+  post_db:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_DB=customname
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+  user:
+    build: ./user
+    ports:
+      - "8082:8082"
