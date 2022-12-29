@@ -10,14 +10,26 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func GetPostByID(c *gin.Context) {
-	id, err := primitive.ObjectIDFromHex(c.Query("id"))
+func GetPost(c *gin.Context) {
+	id := c.Query("id")
+	if id == "" {
+		posts, err := db.GetPosts()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, messageJSON(http.StatusInternalServerError, err.Error()))
+			return
+		}
+
+		c.JSON(http.StatusOK, resultJSON(http.StatusOK, posts))
+		return
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, messageJSON(http.StatusBadRequest, err.Error()))
 		return
 	}
 
-	post, err := db.GetPostByID(id)
+	post, err := db.GetPostByID(objectID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, messageJSON(http.StatusInternalServerError, err.Error()))
 		return
@@ -28,12 +40,8 @@ func GetPostByID(c *gin.Context) {
 	c.JSON(http.StatusOK, resultJSON(http.StatusOK, result))
 }
 
-func GetPosts(c *gin.Context) {
-	c.JSON(http.StatusOK, resultJSON(http.StatusOK, db.GetPosts()))
-}
-
 func CreatePost(c *gin.Context) {
-	var requestBody models.RequestCreatePost
+	var requestBody models.PostRequestBody
 
 	err := c.BindJSON(&requestBody)
 	if err != nil {
@@ -41,9 +49,41 @@ func CreatePost(c *gin.Context) {
 		return
 	}
 
-	objectID := db.CreatePost(requestBody)
+	objectID, err := db.CreatePost(requestBody)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, messageJSON(http.StatusInternalServerError, err.Error()))
+	}
 
 	c.JSON(http.StatusOK, messageJSON(http.StatusOK, fmt.Sprintf("Post created successfully with id %s", objectID)))
+}
+
+func UpdatePost(c *gin.Context) {
+	var requestBody models.PostRequestBody
+
+	err := c.BindJSON(&requestBody)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, messageJSON(http.StatusBadRequest, err.Error()))
+		return
+	}
+
+	id := c.Query("id")
+	if id == "" {
+		c.JSON(http.StatusOK, messageJSON(http.StatusOK, "No ID sent with"))
+		return
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, messageJSON(http.StatusBadRequest, err.Error()))
+		return
+	}
+
+	err = db.UpdatePost(objectID, requestBody)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, messageJSON(http.StatusInternalServerError, err.Error()))
+	}
+
+	c.JSON(http.StatusOK, messageJSON(http.StatusOK, fmt.Sprintf("Post updated successfully with id %s", objectID)))
 }
 
 func DeletePost(c *gin.Context) {

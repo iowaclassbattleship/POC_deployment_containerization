@@ -9,7 +9,8 @@ type Post struct {
 	Content string             `json:"content" bson:"content,omitempty"`
 }
 
-type RequestCreatePost struct {
+type PostRequestBody struct {
+	Author  string `json:"author"`
 	Title   string `json:"title"`
 	Content string `json:"content"`
 }

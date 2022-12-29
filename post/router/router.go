@@ -8,13 +8,14 @@ import (
 
 func Serve() {
 	r := gin.Default()
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
 
-	r.GET("/api/post/:id", controller.GetPostByID)
-
-	r.GET("/api/post", controller.GetPosts)
-	r.POST("/api/post", controller.CreatePost)
-
-	r.DELETE("/api/post", controller.DeletePost)
+	api := r.Group("/api")
+	api.GET("/post", controller.GetPost)
+	api.POST("/post", controller.CreatePost)
+	api.PUT("/post", controller.UpdatePost)
+	api.DELETE("/post", controller.DeletePost)
 
 	r.NoRoute(controller.NotFound)
 

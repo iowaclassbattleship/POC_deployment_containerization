@@ -14,6 +14,8 @@ import (
 )
 
 const uri = "mongodb://root:example@mongo:27017/?maxPoolSize=20&w=majority"
+const databaseName = "post"
+const collectionName = "post"
 
 func getClient() *mongo.Client {
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
@@ -24,11 +26,11 @@ func getClient() *mongo.Client {
 	return client
 }
 
-func GetPosts() []models.Post {
+func GetPosts() ([]models.Post, error) {
 	client := getClient()
 	defer client.Disconnect(context.TODO())
 
-	cursor, err := client.Database("post").Collection("post").Find(context.TODO(), bson.D{})
+	cursor, err := client.Database(databaseName).Collection(collectionName).Find(context.TODO(), bson.D{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -36,10 +38,10 @@ func GetPosts() []models.Post {
 	var posts []models.Post
 	err = cursor.All(context.TODO(), &posts)
 	if err != nil {
-		log.Fatal(err)
+		return []models.Post{}, err
 	}
 
-	return posts
+	return posts, nil
 }
 
 func GetPostByID(id primitive.ObjectID) (models.Post, error) {
@@ -48,7 +50,7 @@ func GetPostByID(id primitive.ObjectID) (models.Post, error) {
 
 	filter := bson.M{"_id": id}
 
-	result := client.Database("post").Collection("post").FindOne(context.TODO(), filter)
+	result := client.Database(databaseName).Collection(collectionName).FindOne(context.TODO(), filter)
 
 	var post models.Post
 	err := result.Decode(&post)
@@ -59,23 +61,44 @@ func GetPostByID(id primitive.ObjectID) (models.Post, error) {
 	return post, nil
 }
 
-func CreatePost(body models.RequestCreatePost) primitive.ObjectID {
+func CreatePost(body models.PostRequestBody) (primitive.ObjectID, error) {
 	client := getClient()
 	defer client.Disconnect(context.TODO())
 
-	coll := client.Database("post").Collection("post")
+	coll := client.Database(databaseName).Collection(collectionName)
 	doc := bson.D{
-		{Key: "author", Value: "anybody"},
+		{Key: "author", Value: body.Author},
 		{Key: "title", Value: body.Title},
 		{Key: "content", Value: body.Content},
 	}
 
 	result, err := coll.InsertOne(context.TODO(), doc)
 	if err != nil {
-		log.Fatal(err)
+		return primitive.NilObjectID, err
 	}
 
-	return result.InsertedID.(primitive.ObjectID)
+	return result.InsertedID.(primitive.ObjectID), nil
+}
+
+func UpdatePost(id primitive.ObjectID, body models.PostRequestBody) error {
+	client := getClient()
+	defer client.Disconnect(context.TODO())
+
+	setTo := bson.D{
+		{Key: "author", Value: body.Author},
+		{Key: "title", Value: body.Title},
+		{Key: "content", Value: body.Content},
+	}
+
+	postCollection := client.Database(databaseName).Collection(collectionName)
+	update := bson.D{{Key: "$set", Value: setTo}}
+
+	_, err := postCollection.UpdateByID(context.TODO(), id, update)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func DeletePost(id primitive.ObjectID) (int64, error) {
@@ -84,9 +107,9 @@ func DeletePost(id primitive.ObjectID) (int64, error) {
 
 	filter := bson.M{"_id": id}
 
-	result, err := client.Database("post").Collection("post").DeleteOne(context.TODO(), filter)
+	result, err := client.Database(databaseName).Collection(collectionName).DeleteOne(context.TODO(), filter)
 	if err != nil {
-		log.Fatal(err)
+		return 0, err
 	}
 
 	if result.DeletedCount == 0 {
