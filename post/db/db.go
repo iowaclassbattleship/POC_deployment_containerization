@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -47,8 +48,12 @@ func GetPostByID(id string) models.Post {
 	filter := bson.M{"_id": id}
 
 	result := client.Database("post").Collection("post").FindOne(context.TODO(), filter)
+
 	var post models.Post
-	result.Decode(&post)
+	err := result.Decode(&post)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return post
 }
@@ -72,11 +77,20 @@ func CreatePost(body models.RequestCreatePost) interface{} {
 	return result.InsertedID
 }
 
-func DeletePost(id string) {
+func DeletePost(id string) (int64, error) {
 	client := getClient()
 	defer client.Disconnect(context.TODO())
 
 	filter := bson.M{"_id": id}
 
-	client.Database("post").Collection("post").DeleteOne(context.TODO(), filter)
+	result, err := client.Database("post").Collection("post").DeleteOne(context.TODO(), filter)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if result.DeletedCount == 0 {
+		return 0, fmt.Errorf("Post with id %s could not be deleted", id)
+	}
+
+	return result.DeletedCount, nil
 }

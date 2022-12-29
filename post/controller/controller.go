@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"poc/post/db"
@@ -11,11 +12,6 @@ import (
 
 func GetPostByID(c *gin.Context) {
 	id := c.Query("id")
-
-	c.JSON(http.StatusOK, gin.H{
-		"statusCode": http.StatusOK,
-		"result":     db.GetPostByID(id),
-	})
 
 	resultJSON(http.StatusOK, db.GetPostByID(id))
 }
@@ -44,9 +40,13 @@ func CreatePost(c *gin.Context) {
 func DeletePost(c *gin.Context) {
 	id := c.Query("id")
 
-	db.DeletePost(id)
+	deletedId, err := db.DeletePost(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, messageJSON(http.StatusInternalServerError, err.Error()))
+		return
+	}
 
-	c.JSON(http.StatusOK, messageJSON(http.StatusOK, "Post deleted successfully"))
+	c.JSON(http.StatusOK, messageJSON(http.StatusOK, fmt.Sprintf("Post %d deleted successfully", deletedId)))
 }
 
 func NotFound(c *gin.Context) {
