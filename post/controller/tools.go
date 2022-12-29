@@ -6,16 +6,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func messageJSON(statusCode int, message string) gin.H {
-	return gin.H{
+func writeMessage(c *gin.Context, statusCode int, message string) {
+	c.JSON(statusCode, gin.H{
 		"statusCode": statusCode,
 		"message":    message,
-	}
+	})
 }
 
-func resultJSON(statusCode int, result []models.Post) gin.H {
-	return gin.H{
+func writeResult(c *gin.Context, statusCode int, result []models.Post) {
+	c.JSON(statusCode, gin.H{
 		"statusCode": statusCode,
 		"result":     result,
-	}
+	})
 }
