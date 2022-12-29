@@ -2,8 +2,6 @@ package db
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -24,27 +22,7 @@ func getClient() *mongo.Client {
 	return client
 }
 
-func TestInsert() {
-	client := getClient()
-	defer client.Disconnect(context.TODO())
-
-	coll := client.Database("post").Collection("post")
-
-	docs := []interface{}{
-		models.Post{Author: "John Cena", Title: "The Art of the fart", Content: "Lol"},
-		models.Post{Author: "John Cena", Title: "The Art of the fart", Content: "Lol"},
-		models.Post{Author: "John Cena", Title: "The Art of the fart", Content: "Lol"},
-		models.Post{Author: "John Cena", Title: "The Art of the fart", Content: "Lol"},
-		models.Post{Author: "John Cena", Title: "The Art of the fart", Content: "Lol"},
-	}
-
-	_, err := coll.InsertMany(context.TODO(), docs)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func GetPosts() {
+func GetPosts() []models.Post {
 	client := getClient()
 	defer client.Disconnect(context.TODO())
 
@@ -53,18 +31,43 @@ func GetPosts() {
 		log.Fatal(err)
 	}
 
-	var results []models.Post
-	err = cursor.All(context.TODO(), &results)
+	var posts []models.Post
+	err = cursor.All(context.TODO(), &posts)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, result := range results {
-		res, _ := json.Marshal(result)
-		fmt.Println(string(res))
-	}
+	return posts
 }
 
-func CreatePost(body models.RequestCreatePost) error {
-	return nil
+func GetPostByID(id string) models.Post {
+	client := getClient()
+	defer client.Disconnect(context.TODO())
+
+	filter := bson.M{"_id": id}
+
+	result := client.Database("post").Collection("post").FindOne(context.TODO(), filter)
+	var post models.Post
+	result.Decode(&post)
+
+	return post
+}
+
+func CreatePost(body models.RequestCreatePost) interface{} {
+	client := getClient()
+	defer client.Disconnect(context.TODO())
+
+	coll := client.Database("post").Collection("post")
+	doc := bson.D{
+		{Key: "author", Value: "anybody"},
+		{Key: "title", Value: body.Title},
+		{Key: "content", Value: body.Content},
+	}
+
+	result, err := coll.InsertOne(context.TODO(), doc)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return result.InsertedID
 }

@@ -5,30 +5,23 @@ import (
 	"net/http"
 	"poc/post/db"
 	"poc/post/models"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 func GetPostByID(c *gin.Context) {
-	_, err := strconv.Atoi(c.Query("id"))
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"statusCode": http.StatusBadRequest,
-			"message":    err,
-		})
-		log.Fatal(err)
-	}
+	id := c.Query("id")
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "bing chilling",
+		"statusCode": http.StatusOK,
+		"result":     db.GetPostByID(id),
 	})
 }
 
 func GetPosts(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"message": "bong chilling",
+		"statusCode": http.StatusOK,
+		"result":     db.GetPosts(),
 	})
 }
 
@@ -37,24 +30,15 @@ func CreatePost(c *gin.Context) {
 
 	err := c.BindJSON(&requestBody)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"statusCode": http.StatusBadRequest,
-			"message":    "corrupt JSON request body",
-		})
+		c.JSON(http.StatusBadRequest, envelope(http.StatusBadRequest, "corrupted JSON body"))
 		log.Fatal(err)
 	}
 
 	db.CreatePost(requestBody)
 
-	c.JSON(http.StatusOK, gin.H{
-		"statusCode": http.StatusOK,
-		"message":    "Post created successfully",
-	})
+	c.JSON(http.StatusOK, envelope(http.StatusOK, "Post created successfully"))
 }
 
 func NotFound(c *gin.Context) {
-	c.JSON(http.StatusNotFound, gin.H{
-		"statusCode": http.StatusNotFound,
-		"message":    "Page not found",
-	})
+	c.JSON(http.StatusNotFound, envelope(http.StatusNotFound, "Ressource could not be found"))
 }
