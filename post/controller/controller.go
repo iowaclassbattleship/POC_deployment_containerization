@@ -2,25 +2,34 @@ package controller
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"poc/post/db"
 	"poc/post/models"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func GetPostByID(c *gin.Context) {
-	id := c.Query("id")
+	id, err := primitive.ObjectIDFromHex(c.Query("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, messageJSON(http.StatusBadRequest, err.Error()))
+		return
+	}
 
-	resultJSON(http.StatusOK, db.GetPostByID(id))
+	post, err := db.GetPostByID(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, messageJSON(http.StatusInternalServerError, err.Error()))
+		return
+	}
+
+	result := []models.Post{post}
+
+	c.JSON(http.StatusOK, resultJSON(http.StatusOK, result))
 }
 
 func GetPosts(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"statusCode": http.StatusOK,
-		"result":     db.GetPosts(),
-	})
+	c.JSON(http.StatusOK, resultJSON(http.StatusOK, db.GetPosts()))
 }
 
 func CreatePost(c *gin.Context) {
@@ -28,17 +37,21 @@ func CreatePost(c *gin.Context) {
 
 	err := c.BindJSON(&requestBody)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, messageJSON(http.StatusBadRequest, "corrupted JSON body"))
-		log.Fatal(err)
+		c.JSON(http.StatusBadRequest, messageJSON(http.StatusBadRequest, err.Error()))
+		return
 	}
 
-	db.CreatePost(requestBody)
+	objectID := db.CreatePost(requestBody)
 
-	c.JSON(http.StatusOK, messageJSON(http.StatusOK, "Post created successfully"))
+	c.JSON(http.StatusOK, messageJSON(http.StatusOK, fmt.Sprintf("Post created successfully with id %s", objectID)))
 }
 
 func DeletePost(c *gin.Context) {
-	id := c.Query("id")
+	id, err := primitive.ObjectIDFromHex(c.Query("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, messageJSON(http.StatusBadRequest, err.Error()))
+		return
+	}
 
 	deletedId, err := db.DeletePost(id)
 	if err != nil {

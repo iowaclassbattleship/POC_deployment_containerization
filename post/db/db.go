@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -41,7 +42,7 @@ func GetPosts() []models.Post {
 	return posts
 }
 
-func GetPostByID(id string) models.Post {
+func GetPostByID(id primitive.ObjectID) (models.Post, error) {
 	client := getClient()
 	defer client.Disconnect(context.TODO())
 
@@ -52,13 +53,13 @@ func GetPostByID(id string) models.Post {
 	var post models.Post
 	err := result.Decode(&post)
 	if err != nil {
-		log.Fatal(err)
+		return post, err
 	}
 
-	return post
+	return post, nil
 }
 
-func CreatePost(body models.RequestCreatePost) interface{} {
+func CreatePost(body models.RequestCreatePost) primitive.ObjectID {
 	client := getClient()
 	defer client.Disconnect(context.TODO())
 
@@ -74,10 +75,10 @@ func CreatePost(body models.RequestCreatePost) interface{} {
 		log.Fatal(err)
 	}
 
-	return result.InsertedID
+	return result.InsertedID.(primitive.ObjectID)
 }
 
-func DeletePost(id string) (int64, error) {
+func DeletePost(id primitive.ObjectID) (int64, error) {
 	client := getClient()
 	defer client.Disconnect(context.TODO())
 
