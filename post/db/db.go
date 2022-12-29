@@ -71,3 +71,12 @@ func CreatePost(body models.RequestCreatePost) interface{} {
 
 	return result.InsertedID
 }
+
+func DeletePost(id string) {
+	client := getClient()
+	defer client.Disconnect(context.TODO())
+
+	filter := bson.M{"_id": id}
+
+	client.Database("post").Collection("post").DeleteOne(context.TODO(), filter)
+}

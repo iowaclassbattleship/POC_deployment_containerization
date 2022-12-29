@@ -16,6 +16,8 @@ func GetPostByID(c *gin.Context) {
 		"statusCode": http.StatusOK,
 		"result":     db.GetPostByID(id),
 	})
+
+	resultJSON(http.StatusOK, db.GetPostByID(id))
 }
 
 func GetPosts(c *gin.Context) {
@@ -30,15 +32,23 @@ func CreatePost(c *gin.Context) {
 
 	err := c.BindJSON(&requestBody)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, envelope(http.StatusBadRequest, "corrupted JSON body"))
+		c.JSON(http.StatusBadRequest, messageJSON(http.StatusBadRequest, "corrupted JSON body"))
 		log.Fatal(err)
 	}
 
 	db.CreatePost(requestBody)
 
-	c.JSON(http.StatusOK, envelope(http.StatusOK, "Post created successfully"))
+	c.JSON(http.StatusOK, messageJSON(http.StatusOK, "Post created successfully"))
+}
+
+func DeletePost(c *gin.Context) {
+	id := c.Query("id")
+
+	db.DeletePost(id)
+
+	c.JSON(http.StatusOK, messageJSON(http.StatusOK, "Post deleted successfully"))
 }
 
 func NotFound(c *gin.Context) {
-	c.JSON(http.StatusNotFound, envelope(http.StatusNotFound, "Ressource could not be found"))
+	c.JSON(http.StatusNotFound, messageJSON(http.StatusNotFound, "Ressource could not be found"))
 }

@@ -1,10 +1,21 @@
 package controller
 
-import "github.com/gin-gonic/gin"
+import (
+	"poc/post/models"
 
-func envelope(statusCode uint, message string) gin.H {
+	"github.com/gin-gonic/gin"
+)
+
+func messageJSON(statusCode uint, message string) gin.H {
 	return gin.H{
 		"statusCode": statusCode,
 		"message":    message,
+	}
+}
+
+func resultJSON(statusCode uint, result models.Post) gin.H {
+	return gin.H{
+		"statusCode": statusCode,
+		"result":     result,
 	}
 }
