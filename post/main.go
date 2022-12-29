@@ -6,6 +6,7 @@ import (
 )
 
 func main() {
+	db.TestInsert()
+	db.GetPosts()
 	router.Serve()
-	db.Migrate()
 }

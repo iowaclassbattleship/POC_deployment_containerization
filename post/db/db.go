@@ -1,57 +1,70 @@
 package db
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
 	"log"
 
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"poc/post/models"
 )
 
-func Migrate() {
-	db := dbConn()
+const uri = "mongodb://root:example@mongo:27017/?maxPoolSize=20&w=majority"
 
-	err := db.AutoMigrate(&models.Post{})
+func getClient() *mongo.Client {
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+	if err != nil {
+		panic(err)
+	}
+
+	return client
+}
+
+func TestInsert() {
+	client := getClient()
+	defer client.Disconnect(context.TODO())
+
+	coll := client.Database("post").Collection("post")
+
+	docs := []interface{}{
+		models.Post{Author: "John Cena", Title: "The Art of the fart", Content: "Lol"},
+		models.Post{Author: "John Cena", Title: "The Art of the fart", Content: "Lol"},
+		models.Post{Author: "John Cena", Title: "The Art of the fart", Content: "Lol"},
+		models.Post{Author: "John Cena", Title: "The Art of the fart", Content: "Lol"},
+		models.Post{Author: "John Cena", Title: "The Art of the fart", Content: "Lol"},
+	}
+
+	_, err := coll.InsertMany(context.TODO(), docs)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func GetPostByID(id int) (models.Post, error) {
-	dbConn := dbConn()
-	var post models.Post
+func GetPosts() {
+	client := getClient()
+	defer client.Disconnect(context.TODO())
 
-	dbConn.First(&post, id)
+	cursor, err := client.Database("post").Collection("post").Find(context.TODO(), bson.D{})
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	return post, nil
-}
+	var results []models.Post
+	err = cursor.All(context.TODO(), &results)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-func GetPosts() ([]models.Post, error) {
-	dbConn := dbConn()
-	var posts []models.Post
-
-	dbConn.Find(&posts)
-
-	return posts, nil
+	for _, result := range results {
+		res, _ := json.Marshal(result)
+		fmt.Println(string(res))
+	}
 }
 
 func CreatePost(body models.RequestCreatePost) error {
-	dbConn := dbConn()
-
-	post := models.Post{Author: "John Mayor", Title: "Hello, world", Content: "Yoyo"}
-
-	dbConn.Select("Author", "Title", "Content").Create(&post)
-
 	return nil
-}
-
-func dbConn() (db *gorm.DB) {
-	dsn := "host=post_db user=postgres password=postgres dbname=postgres port=5432 sslmode=disable TimeZone=Asia/Shanghai"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return db
 }

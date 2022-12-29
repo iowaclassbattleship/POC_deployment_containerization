@@ -1,16 +1,9 @@
 package models
 
-import (
-	"time"
-)
-
 type Post struct {
-	ID        uint `gorm:"primaryKey"`
-	Author    string
-	Title     string
-	Content   string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Author  string
+	Title   string
+	Content string
 }
 
 type RequestCreatePost struct {

@@ -1,18 +1,19 @@
 version: "3.9"
 services:
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    ports:
+      - "27017-27019:27017-27019"
   post:
     build: ./post
     ports:
       - "8081:8081"
-  post_db:
-    image: postgres:14.1-alpine
-    restart: always
-    environment:
-      - POSTGRES_DB=customname
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-    ports:
-      - "5432:5432"
+    depends_on:
+      - "mongo"
   user:
     build: ./user
     ports:

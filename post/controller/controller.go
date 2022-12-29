@@ -11,7 +11,8 @@ import (
 )
 
 func GetPostByID(c *gin.Context) {
-	id, err := strconv.Atoi(c.Query("id"))
+	_, err := strconv.Atoi(c.Query("id"))
+
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"statusCode": http.StatusBadRequest,
@@ -20,29 +21,15 @@ func GetPostByID(c *gin.Context) {
 		log.Fatal(err)
 	}
 
-	post, err := db.GetPostByID(id)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"statusCode": http.StatusInternalServerError,
-			"message":    err,
-		})
-		log.Fatal(err)
-	}
-
-	c.JSON(http.StatusOK, post)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "bing chilling",
+	})
 }
 
 func GetPosts(c *gin.Context) {
-	posts, err := db.GetPosts()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"statusCode": http.StatusInternalServerError,
-			"message":    err,
-		})
-		log.Fatal(err)
-	}
-
-	c.JSON(http.StatusOK, posts)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "bong chilling",
+	})
 }
 
 func CreatePost(c *gin.Context) {
