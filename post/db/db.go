@@ -101,7 +101,7 @@ func UpdatePost(id primitive.ObjectID, body models.PostRequestBody) error {
 	return nil
 }
 
-func DeletePost(id primitive.ObjectID) (int64, error) {
+func DeletePost(id primitive.ObjectID) error {
 	client := getClient()
 	defer client.Disconnect(context.TODO())
 
@@ -109,12 +109,12 @@ func DeletePost(id primitive.ObjectID) (int64, error) {
 
 	result, err := client.Database(databaseName).Collection(collectionName).DeleteOne(context.TODO(), filter)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	if result.DeletedCount == 0 {
-		return 0, fmt.Errorf("Post with id %s could not be deleted", id)
+		return fmt.Errorf("Post with id %s could not be deleted", id)
 	}
 
-	return result.DeletedCount, nil
+	return nil
 }

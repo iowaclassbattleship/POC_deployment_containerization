@@ -81,19 +81,19 @@ func UpdatePost(c *gin.Context) {
 }
 
 func DeletePost(c *gin.Context) {
-	id, err := primitive.ObjectIDFromHex(c.Query("id"))
+	objectID, err := primitive.ObjectIDFromHex(c.Query("id"))
 	if err != nil {
 		writeMessage(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	deletedId, err := db.DeletePost(id)
+	err = db.DeletePost(objectID)
 	if err != nil {
 		writeMessage(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	writeMessage(c, http.StatusOK, fmt.Sprintf("Post %d deleted successfully", deletedId))
+	writeMessage(c, http.StatusOK, fmt.Sprintf("Post with id %s deleted successfully", objectID))
 }
 
 func NotFound(c *gin.Context) {
