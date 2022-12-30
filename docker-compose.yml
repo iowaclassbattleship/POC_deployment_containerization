@@ -14,10 +14,6 @@ services:
       - "8081:8081"
     depends_on:
       - "mongo"
-  auth:
-    build: ./auth
-    ports:
-      - "8082:8082"
   app:
     build: ./app
     ports:
